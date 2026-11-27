@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { QUESTION_CATEGORIES, localize, type QuizSummary } from '@/contracts';
 import { useAccount } from '@/lib/account';
@@ -9,7 +9,7 @@ import { storage } from '@/lib/storage';
 import { AwardChips } from '@/components/Unlocks';
 import { percent } from '@/lib/format';
 import { AppHeader, Screen } from '@/ui/Screen';
-import { Block, Body, Button, Chip, Display, Kicker, Note, PageTitle, PressBlock } from '@/ui/kit';
+import { Block, Body, Button, Chip, Display, Kicker, Note, PageTitle, PressBlock, Skeleton } from '@/ui/kit';
 import { accents, colors, fonts } from '@/ui/theme';
 
 type State = { status: 'loading' } | { status: 'error' } | { status: 'ready'; quizzes: QuizSummary[] };
@@ -45,7 +45,8 @@ function CategoryPicker({ quizzes, selected, onPick }: { quizzes: readonly QuizS
     ...QUESTION_CATEGORIES.map((category) => ({ value: category, icon: CATEGORY_ICONS[category], count: counts.get(category) ?? 0 })),
   ];
   return (
-    <View style={styles.cats} accessibilityLabel="Categories">
+    // A swipeable row on a phone, so the quizzes start on the first screen.
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catsScroll} contentContainerStyle={styles.cats} accessibilityLabel="Categories">
       {tiles.map((tile) => {
         const active = selected === tile.value;
         return (
@@ -58,6 +59,7 @@ function CategoryPicker({ quizzes, selected, onPick }: { quizzes: readonly QuizS
             color={CATEGORY_COLORS[tile.value]}
             border={active ? 3 : 2}
             disabled={tile.count === 0}
+            haptic="select"
             onPress={() => onPick(tile.value)}
             accessibilityState={{ selected: active }}
             style={[styles.cat, active && styles.catActive]}
@@ -68,7 +70,7 @@ function CategoryPicker({ quizzes, selected, onPick }: { quizzes: readonly QuizS
           </PressBlock>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -175,7 +177,7 @@ export default function QuizzesScreen() {
         <PageTitle>Quizzes</PageTitle>
         <Body>Pick a topic, then a quiz. Ten questions a game; earn badges and titles as you master it.</Body>
       </View>
-      {state.status === 'loading' && <Note>Loading quizzes…</Note>}
+      {state.status === 'loading' && <Skeleton count={3} height={170} label="Loading quizzes" />}
       {state.status === 'error' && (
         <Note tone="error" action={{ label: 'Try again', onPress: retry }}>
           Couldn't load the quizzes. Check your connection.
@@ -202,10 +204,13 @@ export default function QuizzesScreen() {
 }
 
 const styles = StyleSheet.create({
-  intro: { gap: 12, alignItems: 'flex-start' },
-  cats: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between' },
-  catOuter: { width: '47.5%' },
-  cat: { minHeight: 96, padding: 12, gap: 4, justifyContent: 'space-between' },
+  intro: { gap: 10, alignItems: 'flex-start' },
+  // Bleed to the screen edges so the row visibly continues off-screen.
+  catsScroll: { marginHorizontal: -18, flexGrow: 0 },
+  // flex-start: a row ScrollView would otherwise stretch each tile's shadow past its face.
+  cats: { gap: 6, paddingHorizontal: 18, paddingBottom: 2, alignItems: 'flex-start' },
+  catOuter: { width: 122 },
+  cat: { height: 100, padding: 12, gap: 2, justifyContent: 'space-between' },
   catActive: { transform: [{ translateX: 2 }, { translateY: 2 }] },
   catIcon: { fontSize: 26 },
   catName: { fontFamily: fonts.display, fontSize: 17, color: colors.ink },
@@ -215,7 +220,7 @@ const styles = StyleSheet.create({
   quiz: { padding: 16, gap: 10 },
   quizTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   quizMeta: { fontFamily: fonts.bodyHeavy, fontSize: 12, color: colors.ink },
-  quizTitle: { fontSize: 24, lineHeight: 25, letterSpacing: -1.1 },
+  quizTitle: { fontSize: 24, lineHeight: 26, letterSpacing: -1.1 },
   quizText: { fontSize: 14, lineHeight: 20 },
   record: { gap: 6 },
   meter: { height: 10, overflow: 'hidden', borderWidth: 2, borderColor: colors.ink, borderRadius: 999, backgroundColor: colors.white },

@@ -1,16 +1,18 @@
 import * as WebBrowser from 'expo-web-browser';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation, usePreventRemove } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { localize, type SoloAnswerResponse, type SoloGameResponse } from '@/contracts';
 import { useAccount } from '@/lib/account';
+import { confirm } from '@/lib/confirm';
+import { haptics } from '@/lib/haptics';
 import { ApiProblemError, answerSoloGame, startSoloGame } from '@/lib/api';
 import { AnswerOption, type OptionState } from '@/components/AnswerOption';
 import { ReportQuestion } from '@/components/ReportQuestion';
 import { UnlockCelebration } from '@/components/Unlocks';
 import { BackBar, Screen } from '@/ui/Screen';
-import { Block, Body, Button, Chip, Display, ErrorText, Kicker, Label, LinkButton, Note } from '@/ui/kit';
+import { Block, Body, Button, Chip, Display, ErrorText, Kicker, Label, LinkButton, Skeleton } from '@/ui/kit';
 import { accents, colors, fonts } from '@/ui/theme';
 import { percent } from '@/lib/format';
 
@@ -40,6 +42,16 @@ export default function SoloGameScreen() {
   const [round, setRound] = useState(0);
   const started = useRef<string | null>(null);
   const scroll = useRef<ScrollViewInstance>(null);
+  const revealY = useRef(0);
+  const navigation = useNavigation();
+
+  // Swiping back, the Android back button or the back arrow mid-game asks first.
+  const midGame = phase.name === 'playing';
+  usePreventRemove(midGame, ({ data }) => {
+    void confirm({ title: 'Leave this game?', message: 'Your answers so far are saved, but this game ends here.', action: 'Leave game', cancel: 'Keep playing' }).then((leave) => {
+      if (leave) navigation.dispatch(data.action);
+    });
+  });
 
   useEffect(() => {
     if (!ready) return;
@@ -64,7 +76,11 @@ export default function SoloGameScreen() {
     setError(null);
     try {
       const reveal = await answerSoloGame(phase.game.gameId, { position: question.position, selectedIndex: selected });
+      if (reveal.correct) haptics.correct();
+      else haptics.wrong();
       setPhase({ ...phase, reveal });
+      // Bring the story into view; the Next button stays in the bottom bar.
+      setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, revealY.current + 4), animated: true }), 250);
     } catch (caught) {
       if (caught instanceof ApiProblemError && caught.code === 'quizzes.gameOver') setPhase({ name: 'replaced' });
       else setError("Couldn't save your answer. Check your connection and try again.");
@@ -80,7 +96,7 @@ export default function SoloGameScreen() {
       setPhase({ ...phase, index: phase.index + 1, reveal: null });
       setSelected(null);
     }
-    scroll.current?.scrollTo({ y: 0, animated: true });
+    scroll.current?.scrollTo({ y: 0, animated: false });
   };
 
   const back = <BackBar title="Solo game" onBack={() => router.navigate('/quizzes')} />;
@@ -102,7 +118,7 @@ export default function SoloGameScreen() {
   if (phase.name === 'starting') {
     return (
       <Screen header={back}>
-        <Note>Shuffling questions…</Note>
+        <Skeleton count={1} height={420} label="Shuffling questions" />
       </Screen>
     );
   }
@@ -126,7 +142,15 @@ export default function SoloGameScreen() {
   if (phase.name === 'finished') {
     const result = phase.last.result!;
     return (
-      <Screen header={back}>
+      <Screen
+        header={back}
+        footer={
+          <>
+            <Button label="Play again" size="lg" onPress={playAgain} />
+            <LinkButton label="Back to Quizzes" onPress={() => router.navigate('/quizzes')} />
+          </>
+        }
+      >
         <Block offset={8} radius={24} border={3} style={styles.card}>
           <Kicker color={accent}>{title}</Kicker>
           <Animated.View entering={ZoomIn.springify().damping(11)} style={styles.scoreRow} accessible accessibilityLabel={`${result.score} out of ${result.total}`}>
@@ -143,8 +167,6 @@ export default function SoloGameScreen() {
               {phase.last.record.gamesPlayed} game{phase.last.record.gamesPlayed === 1 ? '' : 's'} played
             </Body>
           )}
-          <Button label="Play again" size="lg" onPress={playAgain} />
-          <LinkButton label="Back to Quizzes" onPress={() => router.navigate('/quizzes')} />
         </Block>
       </Screen>
     );
@@ -160,16 +182,38 @@ export default function SoloGameScreen() {
   };
 
   return (
-    <Screen header={back} scrollRef={scroll}>
+    <Screen
+      scrollRef={scroll}
+      header={
+        <View style={styles.gameTop}>
+          <BackBar
+            title={title}
+            onBack={() => router.navigate('/quizzes')}
+            right={
+              <Text style={styles.count} accessibilityLabel={`Question ${index + 1} of ${total}`}>
+                {index + 1} / {total}
+              </Text>
+            }
+          />
+          <View style={styles.progress}>
+            <View style={[styles.progressFill, { width: `${((index + (reveal ? 1 : 0)) / total) * 100}%` }]} />
+          </View>
+        </View>
+      }
+      footer={
+        !reveal ? (
+          <>
+            {error && <ErrorText>{error}</ErrorText>}
+            <Button label={saving ? 'Saving…' : selected === null ? 'Pick an answer' : 'Check answer'} icon="arrow" size="lg" busy={saving} disabled={selected === null} onPress={() => void submit()} />
+          </>
+        ) : (
+          <Button label={reveal.result ? 'See your result' : 'Next question'} icon="arrow" size="lg" tone={reveal.correct ? 'lime' : 'yellow'} onPress={next} />
+        )
+      }
+    >
       <Block offset={8} radius={24} border={3} style={styles.card}>
         <View style={styles.meta}>
           <Chip label={title} color={accent} />
-          <Text style={styles.count} accessibilityLabel={`Question ${index + 1} of ${total}`}>
-            {index + 1} / {total}
-          </Text>
-        </View>
-        <View style={styles.progress}>
-          <View style={[styles.progressFill, { width: `${((index + (reveal ? 1 : 0)) / total) * 100}%` }]} />
         </View>
         <View style={styles.eyebrowRow}>
           {question.difficulty === 'expert' && <Chip label="Expert" color={colors.coral} />}
@@ -185,13 +229,13 @@ export default function SoloGameScreen() {
             ))}
           </View>
         </Animated.View>
-        {!reveal ? (
-          <View style={styles.submit}>
-            <Button label={saving ? 'Saving…' : 'Check answer'} icon="arrow" size="lg" busy={saving} disabled={selected === null} onPress={() => void submit()} />
-            {error && <ErrorText>{error}</ErrorText>}
-          </View>
-        ) : (
-          <Animated.View entering={FadeInDown.springify().damping(15)}>
+        {reveal && (
+          <Animated.View
+            entering={FadeInDown.springify().damping(15)}
+            onLayout={(event) => {
+              revealY.current = event.nativeEvent.layout.y;
+            }}
+          >
             <Block offset={5} down radius={16} color={reveal.correct ? colors.correct : colors.blush} style={styles.reveal}>
               <Text style={styles.verdict} accessibilityLiveRegion="polite">
                 {reveal.correct ? '✓ Correct' : '× Not quite'} · {reveal.score} / {total}
@@ -208,7 +252,6 @@ export default function SoloGameScreen() {
               ))}
               <LinkButton label={`Source: ${localize(reveal.source.label)}`} onPress={() => void WebBrowser.openBrowserAsync(reveal.source.url)} />
               <ReportQuestion key={question.slug} questionSlug={question.slug} source="solo" returnTo={`/play/${slug}`} />
-              <Button label={reveal.result ? 'See your result' : 'Next question'} icon="arrow" size="lg" onPress={next} />
             </Block>
           </Animated.View>
         )}
@@ -219,7 +262,7 @@ export default function SoloGameScreen() {
 
 const styles = StyleSheet.create({
   card: { padding: 18, gap: 14 },
-  h1: { fontSize: 38, lineHeight: 38, letterSpacing: -2 },
+  h1: { fontSize: 38, lineHeight: 42, letterSpacing: -2 },
   meta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   count: { fontFamily: fonts.display, fontSize: 18, color: colors.ink },
   progress: { height: 10, overflow: 'hidden', borderWidth: 2, borderColor: colors.ink, borderRadius: 999, backgroundColor: colors.panel },
@@ -229,7 +272,7 @@ const styles = StyleSheet.create({
   questionBlock: { gap: 14 },
   question: { fontSize: 27, lineHeight: 30, letterSpacing: -1.2 },
   options: { gap: 6 },
-  submit: { gap: 10 },
+  gameTop: { gap: 10 },
   reveal: { gap: 10, padding: 16 },
   verdict: { fontFamily: fonts.bodyBlack, fontSize: 15, color: colors.ink },
   answerTitle: { fontSize: 24, lineHeight: 27 },

@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, LinearTransition, ZoomIn } from 'react-native-reanimated';
 import { LOBBY_COMMANDS, localize, type LobbyPlayer, type LobbyStanding, type LobbyState } from '@/contracts';
 import { nameWithTitle } from '@/lib/account';
+import { haptics } from '@/lib/haptics';
 import { AnswerOption, type OptionState } from '@/components/AnswerOption';
 import { ReportQuestion } from '@/components/ReportQuestion';
 import { UnlockCelebration } from '@/components/Unlocks';
@@ -146,6 +147,22 @@ function AnswerTracker({ state, locked }: { state: LobbyState; locked: boolean }
   );
 }
 
+/** The countdown, pinned in the top bar so it never scrolls away. A buzz at 5 seconds if you haven't answered. */
+export function QuestionTimer({ state }: { state: LobbyState }) {
+  const question = state.question!;
+  const left = useCountdown(question.deadline, question.serverNow);
+  const seconds = Math.ceil(left / 1000);
+  const answered = question.myAnswer !== null && question.myAnswer !== undefined;
+  useEffect(() => {
+    if (seconds === 5 && !answered) haptics.warn();
+  }, [seconds, answered]);
+  return (
+    <View style={[styles.timer, left <= 5000 && styles.timerLow]} accessibilityLabel={`${seconds} seconds left`}>
+      <Text style={styles.timerText}>{seconds}</Text>
+    </View>
+  );
+}
+
 export function QuestionView({ state, send }: { state: LobbyState; send: Send }) {
   const question = state.question!;
   const left = useCountdown(question.deadline, question.serverNow);
@@ -154,17 +171,14 @@ export function QuestionView({ state, send }: { state: LobbyState; send: Send })
   const answer = async (index: number) => {
     if (locked !== null) return;
     setPicked(index);
+    haptics.press();
     const ack = await send(LOBBY_COMMANDS.answer, { index: question.index, selectedIndex: index });
     if (!ack.ok && ack.code !== 'lobby.alreadyAnswered') setPicked(null);
   };
-  const seconds = Math.ceil(left / 1000);
   return (
     <Block offset={8} radius={24} border={3} style={styles.card}>
       <View style={styles.meta}>
         <Chip label={`Question ${question.index + 1} / ${question.total}`} color={colors.sky} />
-        <View style={[styles.timer, left <= 5000 && styles.timerLow]} accessibilityLabel={`${seconds} seconds left`}>
-          <Text style={styles.timerText}>{seconds}</Text>
-        </View>
       </View>
       <View style={styles.progress}>
         <View style={[styles.progressFill, { width: `${(left / question.limitMs) * 100}%` }]} />
@@ -192,6 +206,11 @@ export function RevealView({ state }: { state: LobbyState }) {
   const reveal = state.reveal!;
   const mine = reveal.results.find((result) => result.userId === state.me);
   const optionState = (index: number): OptionState => (index === reveal.correctIndex ? 'correct' : mine?.selectedIndex === index ? 'wrong' : 'idle');
+  const correct = Boolean(mine?.correct);
+  useEffect(() => {
+    if (correct) haptics.correct();
+    else haptics.wrong();
+  }, [correct]);
   return (
     <Block offset={8} radius={24} border={3} style={styles.card}>
       <View style={styles.meta}>
@@ -218,9 +237,19 @@ export function RevealView({ state }: { state: LobbyState }) {
   );
 }
 
-export function PodiumView({ state, send }: { state: LobbyState; send: Send }) {
-  const ranking = state.podium?.ranking ?? [];
+/** The podium's sticky bottom bar: Play again for the Host, then Leave. */
+export function PodiumActions({ state, send }: { state: LobbyState; send: Send }) {
   const isHost = state.hostId === state.me;
+  return (
+    <View style={styles.podiumActions}>
+      {isHost ? <Button label="Play again" size="lg" onPress={() => void send(LOBBY_COMMANDS.playAgain)} /> : <Body style={styles.center}>The Host can start another round.</Body>}
+      <Button label="Leave" tone="white" onPress={() => router.navigate('/quizzes')} />
+    </View>
+  );
+}
+
+export function PodiumView({ state }: { state: LobbyState }) {
+  const ranking = state.podium?.ranking ?? [];
   const mine = ranking.find((row) => row.userId === state.me);
   const top = [ranking[1], ranking[0], ranking[2]].filter((row): row is (typeof ranking)[number] => Boolean(row));
   const heights: Record<number, number> = { 1: 150, 2: 118, 3: 98 };
@@ -268,17 +297,6 @@ export function PodiumView({ state, send }: { state: LobbyState; send: Send }) {
           ))}
         </View>
         {mine && <UnlockCelebration unlocks={mine.unlocks} />}
-        <View style={styles.podiumActions}>
-          {isHost ? <Button label="Play again" size="lg" onPress={() => void send(LOBBY_COMMANDS.playAgain)} /> : <Body style={styles.center}>The Host can start another round.</Body>}
-          <Button
-            label="Leave"
-            tone="white"
-            onPress={() => {
-              void send(LOBBY_COMMANDS.leave);
-              router.navigate('/quizzes');
-            }}
-          />
-        </View>
       </Block>
     </View>
   );
@@ -327,7 +345,7 @@ const styles = StyleSheet.create({
   score: { fontFamily: fonts.display, fontSize: 21, color: colors.ink },
   move: { fontFamily: fonts.bodyBlack, fontSize: 11 },
   podiumRoot: { gap: 22 },
-  podiumTitle: { fontSize: 40, lineHeight: 40, letterSpacing: -2.2 },
+  podiumTitle: { fontSize: 40, lineHeight: 44, letterSpacing: -2.2 },
   podium: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 6 },
   podiumCol: { flex: 1, alignItems: 'center', gap: 6 },
   podiumName: { fontFamily: fonts.display, fontSize: 15, color: colors.ink, maxWidth: '100%' },
@@ -339,6 +357,6 @@ const styles = StyleSheet.create({
   ranking: { gap: 8 },
   rankingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderWidth: 2, borderColor: colors.ink, borderRadius: 12, backgroundColor: colors.white },
   rankingSub: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.blue },
-  podiumActions: { gap: 10, marginTop: 6 },
+  podiumActions: { gap: 10 },
   center: { textAlign: 'center' },
 });

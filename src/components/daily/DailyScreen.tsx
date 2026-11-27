@@ -8,6 +8,7 @@ import { Block, Body, Display, Icon, Label, PressBlock } from '@/ui/kit';
 import { colors, fonts } from '@/ui/theme';
 import { DailyView } from './DailyView';
 import { WeekStrip } from './Week';
+import { ReminderOffer } from '@/components/ReminderCard';
 
 /** Today (the first tab) or a Library day (`/day/<date>`). */
 export function DailyScreen({ viewKey }: { viewKey: string }) {
@@ -66,6 +67,7 @@ export function DailyScreen({ viewKey }: { viewKey: string }) {
       </View>
       {isToday && (
         <>
+          <ReminderOffer />
           <WeekStrip />
           <PressBlock offset={5} down={false} radius={16} color={colors.sky} onPress={() => router.navigate('/library')} accessibilityRole="link" style={styles.libraryLink}>
             <View style={styles.libraryBody}>
@@ -90,10 +92,10 @@ export function DailyScreen({ viewKey }: { viewKey: string }) {
 const styles = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   bannerText: { flex: 1, fontFamily: fonts.bodyBold },
-  intro: { gap: 14, alignItems: 'flex-start' },
+  intro: { gap: 12, alignItems: 'flex-start' },
   date: { color: colors.muted },
   dateTag: { color: colors.blue },
-  h1: { fontSize: 50, lineHeight: 47, letterSpacing: -3.6 },
+  h1: { fontSize: 40, lineHeight: 44, letterSpacing: -2.6 },
   em: { color: colors.blue, fontFamily: fonts.display },
   introNote: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   oneQuestion: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: colors.yellow },

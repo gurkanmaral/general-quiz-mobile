@@ -113,7 +113,7 @@ export function StreakCard() {
 const styles = StyleSheet.create({
   section: { gap: 16 },
   head: { gap: 10, alignItems: 'flex-start' },
-  title: { fontSize: 40, lineHeight: 40, letterSpacing: -2.4 },
+  title: { fontSize: 40, lineHeight: 44, letterSpacing: -2.4 },
   lead: { fontSize: 14, lineHeight: 20, color: colors.muted },
   week: { flexDirection: 'row', gap: 8 },
   dayOuter: { flex: 1, height: 92 },

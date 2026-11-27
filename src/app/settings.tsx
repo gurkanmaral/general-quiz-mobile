@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 import { DELETE_ACCOUNT_CONFIRMATION } from '@/contracts';
 import { nameWithTitle, useAccount } from '@/lib/account';
+import { confirm } from '@/lib/confirm';
 import { fetchSocialSettings, updateSocialSettings } from '@/lib/api';
+import { ReminderCard } from '@/components/ReminderCard';
 import { BackBar, Screen } from '@/ui/Screen';
 import { Avatar, Block, Body, Button, Display, ErrorText, Field, Kicker, LinkButton, Note, PageTitle } from '@/ui/kit';
 import { colors, fonts } from '@/ui/theme';
@@ -98,7 +100,12 @@ export default function SettingsScreen() {
   if (!ready || !me) {
     return (
       <Screen header={<BackBar title="Settings" />}>
-        <Note action={{ label: 'Sign in', onPress: () => requireSignIn('/settings') }}>Sign in to change your account settings.</Note>
+        <View style={styles.intro}>
+          <Kicker>On this phone</Kicker>
+          <PageTitle>Settings</PageTitle>
+        </View>
+        <ReminderCard />
+        <Note action={{ label: 'Sign in', onPress: () => requireSignIn('/settings') }}>Sign in to change your account, Friends and Nudges.</Note>
       </Screen>
     );
   }
@@ -120,12 +127,16 @@ export default function SettingsScreen() {
         <Button
           label="Sign out"
           tone="white"
-          onPress={() => {
-            void signOut();
-            router.navigate('/');
-          }}
+          onPress={() =>
+            void confirm({ title: 'Sign out?', message: 'Your Streak and Library stay saved on your account.', action: 'Sign out' }).then((yes) => {
+              if (!yes) return;
+              void signOut();
+              router.navigate('/');
+            })
+          }
         />
       </View>
+      <ReminderCard />
       <NudgeSetting />
       <DeleteAccount />
     </Screen>

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FlipInXUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming, ZoomIn } from 'react-native-reanimated';
 import {
   LOBBY_COMMANDS,
@@ -14,9 +14,10 @@ import {
 } from '@/contracts';
 import { nameWithTitle, useAccount } from '@/lib/account';
 import { fetchFriends, fetchQuizzes, inviteToLobby } from '@/lib/api';
+import { confirm } from '@/lib/confirm';
 import { useProgress } from '@/lib/progress';
 import { copyText, lobbyLink, shareText } from '@/lib/share';
-import { Avatar, Block, Body, Button, Chip, Display, Kicker, Label, LinkButton, PressBlock } from '@/ui/kit';
+import { Avatar, Block, Body, Button, Chip, Display, Icon, Kicker, Label, LinkButton, PressBlock } from '@/ui/kit';
 import { colors, fonts } from '@/ui/theme';
 import type { Send } from './useLobby';
 
@@ -67,6 +68,7 @@ function Segmented({ label, values, current, format, onPick }: { label: string; 
               accessibilityRole="radio"
               accessibilityLabel={format(value)}
               accessibilityState={{ checked: selected }}
+              haptic="select"
               onPress={() => !selected && onPick(value)}
               style={styles.segment}
             >
@@ -117,31 +119,53 @@ function Settings({ state, isHost, send }: { state: LobbyState; isHost: boolean;
     <View style={styles.settings}>
       <View style={[styles.settingTile, styles.quizTile]}>
         <Label>Quiz</Label>
-        <PressBlock offset={3} radius={11} onPress={() => setPicking((value) => !value)} accessibilityLabel={`Quiz: ${localize(state.quiz.title)}. Change`} style={styles.quizPicker}>
+        <PressBlock offset={3} radius={11} onPress={() => setPicking(true)} accessibilityLabel={`Quiz: ${localize(state.quiz.title)}. Change`} style={styles.quizPicker}>
           <Text style={styles.quizPickerText} numberOfLines={1}>
             {localize(state.quiz.title)}
           </Text>
-          <Text style={styles.quizPickerChevron}>{picking ? '▲' : '▼'}</Text>
+          <Text style={styles.quizPickerChevron}>Change</Text>
         </PressBlock>
-        {picking && (
-          <View style={styles.quizList}>
-            {quizzes.map((quiz) => (
-              <Pressable
-                key={quiz.slug}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: quiz.slug === state.settings.quizSlug }}
-                onPress={() => {
-                  setPicking(false);
-                  if (quiz.slug !== state.settings.quizSlug) void send(LOBBY_COMMANDS.settings, { quizSlug: quiz.slug });
-                }}
-                style={[styles.quizOption, quiz.slug === state.settings.quizSlug && styles.quizOptionOn]}
-              >
-                <Text style={styles.quizOptionText}>{localize(quiz.title)}</Text>
-                <Text style={styles.quizOptionMeta}>{quiz.category}</Text>
-              </Pressable>
-            ))}
+        {/* A native sheet, like any phone picker. */}
+        <Modal visible={picking} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setPicking(false)}>
+          <View style={styles.sheet}>
+            <View style={styles.grabber} />
+            <View style={styles.sheetHead}>
+              <Display style={styles.sheetTitle}>Pick a quiz</Display>
+              <PressBlock offset={3} radius={12} onPress={() => setPicking(false)} accessibilityLabel="Close" style={styles.sheetClose}>
+                <Icon name="close" size={18} />
+              </PressBlock>
+            </View>
+            <ScrollView contentContainerStyle={styles.quizList}>
+              {quizzes.map((quiz) => {
+                const on = quiz.slug === state.settings.quizSlug;
+                return (
+                  <PressBlock
+                    key={quiz.slug}
+                    offset={on ? 2 : 4}
+                    radius={14}
+                    color={on ? colors.yellow : colors.white}
+                    haptic="select"
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: on }}
+                    onPress={() => {
+                      setPicking(false);
+                      if (!on) void send(LOBBY_COMMANDS.settings, { quizSlug: quiz.slug });
+                    }}
+                    style={styles.quizOption}
+                  >
+                    <View style={styles.quizOptionBody}>
+                      <Text style={styles.quizOptionText}>{localize(quiz.title)}</Text>
+                      <Text style={styles.quizOptionMeta}>
+                        {quiz.category} · {quiz.questionCount} questions
+                      </Text>
+                    </View>
+                    {on && <Icon name="check" size={20} />}
+                  </PressBlock>
+                );
+              })}
+            </ScrollView>
           </View>
-        )}
+        </Modal>
       </View>
       <View style={styles.settingTile}>
         <Segmented label="Questions" values={counts} current={state.settings.questionCount} format={String} onPick={(questionCount) => void send(LOBBY_COMMANDS.settings, { questionCount })} />
@@ -180,7 +204,13 @@ function PlayerSeats({ state, isHost, send }: { state: LobbyState; isHost: boole
                 </View>
               </View>
               {isHost && !me && (
-                <Pressable onPress={() => void send(LOBBY_COMMANDS.kick, { userId: player.id })} accessibilityRole="button" accessibilityLabel={`Remove ${player.username}`} hitSlop={8} style={styles.kick}>
+                <Pressable
+                  onPress={() =>
+                    void confirm({ title: `Remove ${player.username}?`, message: 'They can rejoin with the link.', action: 'Remove' }).then((yes) => {
+                      if (yes) void send(LOBBY_COMMANDS.kick, { userId: player.id });
+                    })
+                  }
+                  accessibilityRole="button" accessibilityLabel={`Remove ${player.username}`} hitSlop={8} style={styles.kick}>
                   <Text style={styles.kickText}>×</Text>
                 </Pressable>
               )}
@@ -268,13 +298,34 @@ function InviteFriends({ state }: { state: LobbyState }) {
   );
 }
 
+/** The sticky bottom bar of the waiting room: Start for the Host, a waiting line for everyone else. */
+export function WaitingActions({ state, send }: { state: LobbyState; send: Send }) {
+  const isHost = state.hostId === state.me;
+  const ready = state.players.filter((player) => player.connected).length;
+  const hostName = state.players.find((player) => player.id === state.hostId)?.username ?? 'the Host';
+  if (!isHost) {
+    return (
+      <View style={styles.waiting}>
+        <Text style={styles.waitingText}>Waiting for {hostName} to start…</Text>
+      </View>
+    );
+  }
+  return (
+    <>
+      <PressBlock offset={6} radius={16} border={3} color={colors.lime} haptic="press" onPress={() => void send(LOBBY_COMMANDS.start)} accessibilityLabel="Start game" style={styles.start}>
+        <Text style={styles.startText}>Start game</Text>
+        <Text style={styles.startArrow}>▶</Text>
+      </PressBlock>
+      <Text style={styles.ready}>{ready <= 1 ? 'You can start alone, or invite friends first.' : `${ready} players ready`}</Text>
+    </>
+  );
+}
+
 /** The waiting room: join ticket, settings, player seats, start, and invites (FR-27–FR-30). */
 export function WaitingRoom({ state, send }: { state: LobbyState; send: Send }) {
   const { me } = useAccount();
   const isHost = state.hostId === state.me;
   const [copied, setCopied] = useState<boolean | null>(null);
-  const ready = state.players.filter((player) => player.connected).length;
-  const hostName = state.players.find((player) => player.id === state.hostId)?.username ?? 'the Host';
 
   const share = async () => {
     const link = lobbyLink(state.code);
@@ -285,11 +336,6 @@ export function WaitingRoom({ state, send }: { state: LobbyState; send: Send }) 
     setCopied(await copyText(lobbyLink(state.code)));
     setTimeout(() => setCopied(null), 2000);
   };
-  const leave = () => {
-    void send(LOBBY_COMMANDS.leave);
-    router.navigate('/quizzes');
-  };
-
   return (
     <View style={styles.root}>
       <Block offset={8} radius={26} border={3} style={styles.room}>
@@ -323,23 +369,6 @@ export function WaitingRoom({ state, send }: { state: LobbyState; send: Send }) 
           </View>
         </View>
         <PlayerSeats state={state} isHost={isHost} send={send} />
-
-        <View style={styles.actions}>
-          {isHost ? (
-            <>
-              <PressBlock offset={6} radius={16} border={3} color={colors.lime} onPress={() => void send(LOBBY_COMMANDS.start)} accessibilityLabel="Start game" style={styles.start}>
-                <Text style={styles.startText}>Start game</Text>
-                <Text style={styles.startArrow}>▶</Text>
-              </PressBlock>
-              <Text style={styles.ready}>{ready <= 1 ? 'You can start alone, or invite friends first.' : `${ready} players ready`}</Text>
-            </>
-          ) : (
-            <View style={styles.waiting}>
-              <Text style={styles.waitingText}>Waiting for {hostName} to start…</Text>
-            </View>
-          )}
-          <Button label="Leave" tone="white" onPress={leave} />
-        </View>
       </Block>
       {me && <InviteFriends state={state} />}
     </View>
@@ -350,7 +379,7 @@ const styles = StyleSheet.create({
   root: { gap: 22 },
   room: { padding: 18, gap: 14 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  h1: { fontSize: 38, lineHeight: 38, letterSpacing: -2.2 },
+  h1: { fontSize: 38, lineHeight: 42, letterSpacing: -2.2 },
   live: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 11, paddingVertical: 5, borderWidth: 2, borderColor: colors.ink, borderRadius: 999, backgroundColor: colors.white },
   liveDotWrap: { width: 10, height: 10, alignItems: 'center', justifyContent: 'center' },
   liveRing: { position: 'absolute', width: 10, height: 10, borderRadius: 5, backgroundColor: colors.live },
@@ -379,10 +408,15 @@ const styles = StyleSheet.create({
   segmentText: { fontFamily: fonts.display, fontSize: 17, color: colors.ink },
   quizPicker: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 46, paddingHorizontal: 12 },
   quizPickerText: { flex: 1, fontFamily: fonts.display, fontSize: 17, color: colors.ink },
-  quizPickerChevron: { fontSize: 12, color: colors.ink },
-  quizList: { gap: 6 },
-  quizOption: { padding: 11, borderWidth: 2, borderColor: colors.ink, borderRadius: 11, backgroundColor: colors.white },
-  quizOptionOn: { backgroundColor: colors.yellow },
+  quizPickerChevron: { fontFamily: fonts.bodyHeavy, fontSize: 12, color: colors.blue },
+  sheet: { flex: 1, backgroundColor: colors.paper, paddingTop: 10 },
+  grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.faint, marginBottom: 8 },
+  sheetHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingBottom: 12 },
+  sheetTitle: { fontSize: 28, letterSpacing: -1.2 },
+  sheetClose: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  quizList: { gap: 8, paddingHorizontal: 18, paddingBottom: 40 },
+  quizOption: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
+  quizOptionBody: { flex: 1, gap: 2 },
   quizOptionText: { fontFamily: fonts.bodyHeavy, fontSize: 15, color: colors.ink },
   quizOptionMeta: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.muted },
   seats: { gap: 8 },
@@ -399,12 +433,11 @@ const styles = StyleSheet.create({
   openPlus: { fontSize: 26, color: colors.ink },
   openTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ink },
   openText: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.ink },
-  actions: { gap: 12, marginTop: 12, paddingTop: 18, borderTopWidth: 2, borderTopColor: colors.faint, borderStyle: 'dashed' },
   start: { minHeight: 62, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
   startText: { fontFamily: fonts.display, fontSize: 23, color: colors.ink },
   startArrow: { fontSize: 15, color: colors.ink },
   ready: { fontFamily: fonts.bodyHeavy, fontSize: 14, textAlign: 'center', color: colors.ink },
-  waiting: { padding: 16, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.ink, borderRadius: 14, alignItems: 'center' },
+  waiting: { padding: 14, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.ink, borderRadius: 14, alignItems: 'center' },
   waitingText: { fontFamily: fonts.display, fontSize: 18, color: colors.ink },
   invite: { padding: 18, gap: 10 },
   inviteTitle: { fontSize: 24, letterSpacing: -1 },

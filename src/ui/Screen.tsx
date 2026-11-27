@@ -1,6 +1,7 @@
-import { router } from 'expo-router';
-import type { ReactNode } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type ScrollViewInstance, type StyleProp, type ViewStyle } from 'react-native';
+import { router, useScrollToTop } from 'expo-router';
+import { BottomTabBarHeightContext } from 'expo-router/tabs';
+import { useContext, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 import { useAccount } from '@/lib/account';
@@ -23,9 +24,14 @@ function GridBackground() {
   );
 }
 
+/**
+ * A screen: a fixed top bar, the scrolling content, and an optional sticky action bar at the bottom
+ * (the main action stays under the thumb). In a tab, tapping the active tab scrolls back to the top.
+ */
 export function Screen({
   children,
   header,
+  footer,
   contentStyle,
   refreshing,
   onRefresh,
@@ -33,25 +39,43 @@ export function Screen({
 }: {
   children: ReactNode;
   header?: ReactNode;
+  /** Sticky bottom actions (main CTA). */
+  footer?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
   refreshing?: boolean;
   onRefresh?: () => void;
-  scrollRef?: React.Ref<ScrollViewInstance>;
+  scrollRef?: RefObject<ScrollViewInstance | null>;
 }) {
   const insets = useSafeAreaInsets();
+  // Inside the tabs the tab bar already covers the home indicator.
+  const inTabs = useContext(BottomTabBarHeightContext) !== undefined;
+  const ownRef = useRef<ScrollViewInstance>(null);
+  const ref = scrollRef ?? ownRef;
+  useScrollToTop(ref as RefObject<ScrollViewInstance>);
+  const [scrolled, setScrolled] = useState(false);
+  const bottomInset = inTabs ? 0 : insets.bottom;
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = event.nativeEvent.contentOffset.y > 4;
+    if (next !== scrolled) setScrolled(next);
+  };
   return (
-    // The status bar area sits outside the ScrollView, so content scrolls under nothing but the paper.
+    // The status bar area and the top bar sit outside the ScrollView, so content scrolls under neither.
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <GridBackground />
+      {header && <View style={[styles.top, scrolled && styles.topScrolled]}>{header}</View>}
       <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={[styles.content, { paddingTop: 6, paddingBottom: insets.bottom + 40 }, contentStyle]}
+        ref={ref}
+        onScroll={onScroll}
+        scrollEventThrottle={32}
+        contentContainerStyle={[styles.content, { paddingBottom: (footer ? 24 : bottomInset + 40) }, contentStyle]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         refreshControl={onRefresh ? <RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} tintColor={colors.ink} /> : undefined}
       >
-        {header}
         {children}
       </ScrollView>
+      {footer && <View style={[styles.footer, { paddingBottom: Math.max(bottomInset, 14) }]}>{footer}</View>}
     </View>
   );
 }
@@ -117,7 +141,7 @@ export function AppHeader() {
 }
 
 /** Top bar for pushed screens: back button and a small title. */
-export function BackBar({ title, onBack }: { title?: string; onBack?: () => void }) {
+export function BackBar({ title, onBack, right }: { title?: string; onBack?: () => void; right?: ReactNode }) {
   return (
     <View style={styles.backBar}>
       <PressBlock offset={3} radius={12} onPress={onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))} accessibilityLabel="Back" style={styles.backButton}>
@@ -127,15 +151,21 @@ export function BackBar({ title, onBack }: { title?: string; onBack?: () => void
         <Text style={styles.backTitle} numberOfLines={1}>
           {title}
         </Text>
-      ) : null}
+      ) : (
+        <View style={{ flex: 1 }} />
+      )}
+      {right}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.paper },
-  content: { paddingHorizontal: 18, gap: 22 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 14, borderBottomWidth: 3, borderBottomColor: colors.ink },
+  content: { paddingHorizontal: 18, paddingTop: 16, gap: 22 },
+  top: { paddingHorizontal: 18, paddingTop: 6, paddingBottom: 10, backgroundColor: colors.paper, zIndex: 2 },
+  topScrolled: { borderBottomWidth: 2, borderBottomColor: colors.ink },
+  footer: { gap: 10, paddingHorizontal: 18, paddingTop: 14, borderTopWidth: 3, borderTopColor: colors.ink, backgroundColor: colors.paper },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   brandMark: { width: 42, height: 42, transform: [{ rotate: '-5deg' }] },
   brandShadow: { position: 'absolute', left: 3, top: 3, width: 38, height: 38, borderRadius: 11, backgroundColor: colors.ink },

@@ -1,6 +1,8 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type TextInputProps, type TextProps, type TextStyle, type ViewStyle } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
+import { haptics } from '@/lib/haptics';
 import type { AvatarId } from '@/contracts';
 import { colors, fonts } from './theme';
 
@@ -35,10 +37,10 @@ export function Kicker({ children, color = colors.yellow }: { children: ReactNod
   );
 }
 
-/** A big page title ending in a blue full stop: "Quizzes." */
-export function PageTitle({ children, size = 52 }: { children: ReactNode; size?: number }) {
+/** A big page title ending in a blue full stop: "Quizzes." (iOS clips ascenders below ~1.1× line height.) */
+export function PageTitle({ children, size = 46 }: { children: ReactNode; size?: number }) {
   return (
-    <Display style={{ fontSize: size, lineHeight: size * 0.95, letterSpacing: -size * 0.06 }}>
+    <Display style={{ fontSize: size, lineHeight: Math.round(size * 1.1), letterSpacing: -size * 0.06 }}>
       {children}
       <Text style={{ color: colors.blue }}>.</Text>
     </Display>
@@ -71,6 +73,8 @@ export function Block({ children, offset = 5, down = false, radius = 18, color =
   );
 }
 
+type Haptic = 'tap' | 'press' | 'select' | false;
+
 /** A pressable block that sinks into its shadow when pressed (web :active). */
 export function PressBlock({
   children,
@@ -87,7 +91,10 @@ export function PressBlock({
   accessibilityRole = 'button',
   accessibilityState,
   testID,
+  haptic = 'tap',
 }: BlockProps & {
+  /** Feedback on press; false for none. */
+  haptic?: Haptic;
   onPress?: () => void;
   disabled?: boolean;
   accessibilityLabel?: string;
@@ -98,7 +105,13 @@ export function PressBlock({
   const dx = down ? 0 : offset;
   return (
     <Pressable
-      onPress={onPress}
+      onPress={
+        onPress &&
+        (() => {
+          if (haptic) haptics[haptic]();
+          onPress();
+        })
+      }
       disabled={disabled}
       accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel}
@@ -145,7 +158,9 @@ export function Button({
   style,
   accessibilityLabel,
   testID,
+  haptic,
 }: {
+  haptic?: Haptic;
   label: string;
   onPress?: () => void;
   tone?: ButtonTone;
@@ -171,6 +186,7 @@ export function Button({
       outerStyle={style}
       accessibilityLabel={accessibilityLabel ?? label}
       testID={testID}
+      haptic={haptic ?? (size === 'lg' ? 'press' : 'tap')}
       style={[styles.buttonFace, { minHeight: height, paddingHorizontal: size === 'sm' ? 12 : 20 }]}
     >
       {busy ? (
@@ -231,6 +247,25 @@ export function ErrorText({ children }: { children: ReactNode }) {
     <Text accessibilityRole="alert" style={styles.error}>
       {children}
     </Text>
+  );
+}
+
+/** Placeholder cards that pulse while content loads (instead of a "Loading…" line). */
+export function Skeleton({ count = 3, height = 120, label = 'Loading' }: { count?: number; height?: number; label?: string }) {
+  const pulse = useSharedValue(0);
+  useEffect(() => {
+    pulse.value = withRepeat(withTiming(1, { duration: 750 }), -1, true);
+  }, [pulse]);
+  const style = useAnimatedStyle(() => ({ opacity: 0.45 + pulse.value * 0.35 }));
+  return (
+    <View style={styles.skeletons} accessible accessibilityLabel={label} accessibilityRole="progressbar">
+      {Array.from({ length: count }, (_, index) => (
+        <Animated.View key={index} style={[styles.skeleton, { height }, style]}>
+          <View style={styles.skeletonLine} />
+          <View style={[styles.skeletonLine, styles.skeletonShort]} />
+        </Animated.View>
+      ))}
+    </View>
   );
 }
 
@@ -314,5 +349,9 @@ const styles = StyleSheet.create({
   input: { minHeight: 52, paddingHorizontal: 14, borderWidth: 2, borderColor: colors.ink, borderRadius: 12, backgroundColor: colors.white, fontFamily: fonts.bodyBold, fontSize: 16, color: colors.ink },
   hint: { fontSize: 13, color: colors.muted },
   error: { fontFamily: fonts.bodyBold, fontSize: 14, lineHeight: 20, color: colors.down },
+  skeletons: { gap: 14 },
+  skeleton: { justifyContent: 'flex-end', gap: 10, padding: 18, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.faint, borderRadius: 18, backgroundColor: colors.stone },
+  skeletonLine: { height: 14, width: '70%', borderRadius: 7, backgroundColor: colors.faint, opacity: 0.4 },
+  skeletonShort: { width: '40%' },
   avatar: { position: 'absolute', left: 0, top: 0, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.ink },
 });

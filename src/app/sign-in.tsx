@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   content: { padding: 22, gap: 16 },
   grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.faint, marginBottom: 4 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  title: { flex: 1, fontSize: 32, lineHeight: 34, letterSpacing: -1.8 },
+  title: { flex: 1, fontSize: 32, lineHeight: 35, letterSpacing: -1.8 },
   close: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   form: { gap: 14 },
   bold: { fontFamily: fonts.bodyHeavy },

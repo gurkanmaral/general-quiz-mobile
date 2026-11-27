@@ -3,10 +3,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import { UsernameSchema, type Friend, type FriendRequest, type FriendsResponse } from '@/contracts';
 import { nameWithTitle, useAccount } from '@/lib/account';
 import { ApiProblemError, acceptFriendRequest, dismissFriendRequest, fetchFriends, nudgeFriend, removeFriend, sendFriendRequest } from '@/lib/api';
+import { confirm } from '@/lib/confirm';
 import { useProgress } from '@/lib/progress';
 import { friendLink, nudgeLink, shareText } from '@/lib/share';
 import { BackBar, Screen } from '@/ui/Screen';
-import { Avatar, Block, Body, Button, Chip, Display, ErrorText, Field, Kicker, Note, PageTitle } from '@/ui/kit';
+import { Avatar, Block, Body, Button, Chip, Display, ErrorText, Field, Kicker, Note, PageTitle, Skeleton } from '@/ui/kit';
 import { colors, fonts } from '@/ui/theme';
 
 type State = { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: FriendsResponse };
@@ -39,7 +40,10 @@ function RequestRow({ request, incoming, busy, onAccept, onDismiss }: { request:
 }
 
 function FriendRow({ friend, busy, onRemove, onNudge }: { friend: Friend; busy: boolean; onRemove: () => void; onNudge: () => void }) {
-  const [confirming, setConfirming] = useState(false);
+  const askRemove = () =>
+    void confirm({ title: `Remove ${friend.username}?`, message: "You'll stop seeing each other's streaks. You can add them again later.", action: 'Remove Friend' }).then((yes) => {
+      if (yes) onRemove();
+    });
   return (
     <Block offset={4} radius={16} style={styles.friend}>
       <View style={styles.friendTop}>
@@ -55,16 +59,9 @@ function FriendRow({ friend, busy, onRemove, onNudge }: { friend: Friend; busy: 
         </View>
       </View>
       <View style={styles.friendActions}>
-        {!confirming && friend.canNudge && <Button size="sm" label="👋 Nudge" disabled={busy} onPress={onNudge} accessibilityLabel={`Nudge ${friend.username}`} />}
-        {!confirming && !friend.playedToday && friend.nudged && <Chip label="Nudged ✓" color={colors.sky} />}
-        {confirming ? (
-          <>
-            <Button size="sm" tone="coral" label="Remove" disabled={busy} onPress={onRemove} accessibilityLabel={`Confirm removing ${friend.username}`} />
-            <Button size="sm" tone="white" label="Keep" onPress={() => setConfirming(false)} />
-          </>
-        ) : (
-          <Button size="sm" tone="white" label="⋯" onPress={() => setConfirming(true)} accessibilityLabel={`Remove ${friend.username}`} />
-        )}
+        {friend.canNudge && <Button size="sm" label="👋 Nudge" disabled={busy} onPress={onNudge} accessibilityLabel={`Nudge ${friend.username}`} />}
+        {!friend.playedToday && friend.nudged && <Chip label="Nudged ✓" color={colors.sky} />}
+        <Button size="sm" tone="white" label="⋯" disabled={busy} onPress={askRemove} accessibilityLabel={`Remove ${friend.username}`} />
       </View>
     </Block>
   );
@@ -176,7 +173,7 @@ export default function FriendsScreen() {
       </View>
       <Block offset={7} radius={22} border={3} style={styles.add}>
         <Display style={styles.addTitle}>Add a Friend</Display>
-        <Field label="Username" placeholder="Their Username" autoCapitalize="none" autoCorrect={false} value={username} onChangeText={setUsername} onSubmitEditing={() => void submit()} />
+        <Field label="Username" placeholder="Their Username" autoCapitalize="none" autoCorrect={false} returnKeyType="send" value={username} onChangeText={setUsername} onSubmitEditing={() => void submit()} />
         <Button label="Send request" disabled={busy || !username.trim()} onPress={() => void submit()} />
         <View style={styles.linkBox}>
           <Body style={styles.linkText}>Or share your friend link — whoever opens it can add you.</Body>
@@ -188,7 +185,7 @@ export default function FriendsScreen() {
         </View>
         {note && (note.error ? <ErrorText>{note.text}</ErrorText> : <Note tone="success">{note.text}</Note>)}
       </Block>
-      {state.status === 'loading' && <Note>Loading your Friends…</Note>}
+      {state.status === 'loading' && <Skeleton count={3} height={110} label="Loading your Friends" />}
       {state.status === 'error' && (
         <Note tone="error" action={{ label: 'Try again', onPress: reload }}>
           Couldn't load your Friends.

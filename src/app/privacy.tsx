@@ -162,7 +162,7 @@ export default function PrivacyScreen() {
 const styles = StyleSheet.create({
   langs: { flexDirection: 'row', gap: 8 },
   intro: { gap: 12, alignItems: 'flex-start' },
-  h1: { fontSize: 40, lineHeight: 40, letterSpacing: -2.2 },
+  h1: { fontSize: 40, lineHeight: 44, letterSpacing: -2.2 },
   lead: { fontSize: 17, lineHeight: 25 },
   muted: { color: colors.muted },
   card: { padding: 18, gap: 10 },

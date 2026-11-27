@@ -79,5 +79,5 @@ export function InviteOffer({ kind, token }: { kind: 'friend' | 'nudge'; token: 
 const styles = StyleSheet.create({
   card: { padding: 20, gap: 16 },
   owner: { gap: 14 },
-  title: { fontSize: 28, lineHeight: 30, letterSpacing: -1.3 },
+  title: { fontSize: 28, lineHeight: 31, letterSpacing: -1.3 },
 });

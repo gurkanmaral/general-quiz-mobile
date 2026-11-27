@@ -23,6 +23,7 @@ export function AnswerOption({ index, label, state, disabled, onPress }: { index
       radius={13}
       offset={5}
       down
+      haptic="select"
       accessibilityRole="radio"
       accessibilityLabel={`${letter}. ${label}${state === 'correct' ? ', correct answer' : state === 'wrong' ? ', your answer, wrong' : ''}`}
       accessibilityState={{ checked: state === 'selected' || state === 'wrong' }}

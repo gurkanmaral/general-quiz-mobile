@@ -8,7 +8,7 @@ import { useNotifications } from '@/lib/notifications';
 import { useProgress } from '@/lib/progress';
 import { rarityText } from '@/components/Unlocks';
 import { AppHeader, Screen } from '@/ui/Screen';
-import { Avatar, Block, Body, Button, Display, Icon, Kicker, Label, LinkButton, Note, PageTitle, PressBlock } from '@/ui/kit';
+import { Avatar, Block, Body, Button, Display, Icon, Kicker, Label, LinkButton, Note, PageTitle, PressBlock, Skeleton } from '@/ui/kit';
 import { colors, fonts } from '@/ui/theme';
 
 type State = { status: 'loading' } | { status: 'error' } | { status: 'ready'; profile: ProfileResponse };
@@ -109,6 +109,7 @@ export default function ProfileScreen() {
           <Body>Sign in to save your Library, play quizzes, earn badges and titles, and add Friends.</Body>
           <Button label={status === 'signedIn' ? 'Finish your profile' : 'Sign in or create an account'} tone="ink" size="lg" disabled={status === 'loading'} onPress={() => openSignIn(status === 'signedIn' ? 'profile' : 'signIn', '/profile')} />
         </Block>
+        <MenuLink label="Daily reminder" detail="Get a nudge when the new question is out" href="/settings" />
         <LinkButton label="Privacy · Gizlilik" color={colors.ink} onPress={() => router.push('/privacy')} />
       </Screen>
     );
@@ -116,7 +117,7 @@ export default function ProfileScreen() {
 
   return (
     <Screen header={<AppHeader />} onRefresh={retry}>
-      {state.status === 'loading' && <Note>Loading your profile…</Note>}
+      {state.status === 'loading' && <Skeleton count={3} height={110} label="Loading your profile" />}
       {state.status === 'error' && (
         <Note tone="error" action={{ label: 'Try again', onPress: retry }}>
           Couldn't load your profile.
@@ -155,7 +156,7 @@ export default function ProfileScreen() {
           <View style={styles.menuList}>
             <MenuLink label="Friends" detail="Who played today, nudges and requests" href="/friends" />
             <MenuLink label="Notifications" detail="Requests, nudges and Lobby invites" href="/notifications" badge={unread} />
-            <MenuLink label="Settings" detail="Account, nudges, sign out" href="/settings" />
+            <MenuLink label="Settings" detail="Daily reminder, account, nudges, sign out" href="/settings" />
           </View>
           <View style={styles.equipInfo}>
             <Body style={styles.equipText}>
@@ -189,11 +190,11 @@ const styles = StyleSheet.create({
   intro: { gap: 12, alignItems: 'flex-start' },
   signedOut: { padding: 20, gap: 12 },
   bigEmoji: { fontSize: 48 },
-  signedOutTitle: { fontSize: 30, lineHeight: 31, letterSpacing: -1.4 },
+  signedOutTitle: { fontSize: 30, lineHeight: 33, letterSpacing: -1.4 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   headAvatar: { transform: [{ rotate: '-4deg' }] },
   headName: { flex: 1, gap: 8, alignItems: 'flex-start' },
-  name: { fontSize: 34, lineHeight: 35, letterSpacing: -1.8 },
+  name: { fontSize: 34, lineHeight: 37, letterSpacing: -1.8 },
   title: { color: colors.blue },
   stats: { flexDirection: 'row', gap: 6 },
   statOuter: { flex: 1 },

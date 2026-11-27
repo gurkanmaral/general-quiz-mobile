@@ -36,9 +36,10 @@
         }
       ],
       "expo-secure-store",
-      "expo-image",
       "expo-web-browser",
-      "expo-localization"
+      "expo-localization",
+      "@react-native-community/datetimepicker",
+      ["expo-notifications", { "color": "#ffd83d" }]
     ],
     "scheme": "kno",
     "backgroundColor": "#f3efdf",
