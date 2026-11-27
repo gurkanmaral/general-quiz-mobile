@@ -1,0 +1,584 @@
+{
+  "slug": "daily-originals",
+  "status": "published",
+  "kind": "dailyPool",
+  "title": {
+    "en": "KNO. Daily originals"
+  },
+  "questions": [
+    {
+      "slug": "earth-atmosphere",
+      "status": "published",
+      "difficulty": "standard",
+      "category": "Science",
+      "theme": "cyan",
+      "eyebrow": {
+        "en": "Above us every day"
+      },
+      "text": {
+        "en": "Which gas makes up most of Earth's atmosphere?"
+      },
+      "options": [
+        {
+          "en": "Oxygen"
+        },
+        {
+          "en": "Carbon dioxide"
+        },
+        {
+          "en": "Nitrogen"
+        },
+        {
+          "en": "Hydrogen"
+        }
+      ],
+      "correctIndex": 2,
+      "answerTitle": {
+        "en": "Nitrogen makes up about 78%."
+      },
+      "summary": {
+        "en": "Oxygen accounts for roughly 21%, while argon, carbon dioxide and other gases make up the remaining sliver. Nitrogen is essential to life, but most organisms cannot use it directly from the air."
+      },
+      "facts": [
+        {
+          "label": {
+            "en": "Nitrogen"
+          },
+          "value": {
+            "en": "78%"
+          },
+          "detail": {
+            "en": "The clear majority of the atmosphere."
+          }
+        },
+        {
+          "label": {
+            "en": "Oxygen"
+          },
+          "value": {
+            "en": "21%"
+          },
+          "detail": {
+            "en": "Produced largely through photosynthesis."
+          }
+        },
+        {
+          "label": {
+            "en": "The rest"
+          },
+          "value": {
+            "en": "~1%"
+          },
+          "detail": {
+            "en": "Argon, carbon dioxide and trace gases."
+          }
+        }
+      ],
+      "video": {
+        "title": {
+          "en": "The atmosphere, explained"
+        },
+        "creator": "NASA Earth",
+        "url": "https://www.youtube.com/results?search_query=NASA+Earth+atmosphere+explained"
+      },
+      "source": {
+        "label": {
+          "en": "NASA Earth facts"
+        },
+        "url": "https://science.nasa.gov/earth/facts/"
+      }
+    },
+    {
+      "slug": "moby-dick-opening",
+      "status": "published",
+      "difficulty": "standard",
+      "category": "Books",
+      "theme": "crimson",
+      "eyebrow": {
+        "en": "An iconic opening line"
+      },
+      "text": {
+        "en": "Which novel begins with the words “Call me Ishmael”?"
+      },
+      "options": [
+        {
+          "en": "Moby-Dick"
+        },
+        {
+          "en": "The Old Man and the Sea"
+        },
+        {
+          "en": "Treasure Island"
+        },
+        {
+          "en": "The Odyssey"
+        }
+      ],
+      "correctIndex": 0,
+      "answerTitle": {
+        "en": "It is Moby-Dick."
+      },
+      "summary": {
+        "en": "Herman Melville's 1851 novel follows Ishmael aboard the Pequod, commanded by Captain Ahab. Its famous opening is only three words long, yet immediately gives its narrator a distinctive voice."
+      },
+      "facts": [
+        {
+          "label": {
+            "en": "Published"
+          },
+          "value": {
+            "en": "1851"
+          },
+          "detail": {
+            "en": "First in London, then in New York."
+          }
+        },
+        {
+          "label": {
+            "en": "The ship"
+          },
+          "value": {
+            "en": "Pequod"
+          },
+          "detail": {
+            "en": "Ahab's whaling vessel."
+          }
+        },
+        {
+          "label": {
+            "en": "The whale"
+          },
+          "value": {
+            "en": "Moby Dick"
+          },
+          "detail": {
+            "en": "The focus of Ahab's obsession."
+          }
+        }
+      ],
+      "video": {
+        "title": {
+          "en": "Why read Moby-Dick?"
+        },
+        "creator": "TED-Ed",
+        "url": "https://www.youtube.com/results?search_query=TED-Ed+why+read+Moby+Dick"
+      },
+      "source": {
+        "label": {
+          "en": "Encyclopaedia Britannica"
+        },
+        "url": "https://www.britannica.com/topic/Moby-Dick-novel"
+      }
+    },
+    {
+      "slug": "first-modern-olympics",
+      "status": "published",
+      "difficulty": "standard",
+      "category": "History",
+      "theme": "amber",
+      "eyebrow": {
+        "en": "The games return"
+      },
+      "text": {
+        "en": "Which city hosted the first modern Olympic Games in 1896?"
+      },
+      "options": [
+        {
+          "en": "Paris"
+        },
+        {
+          "en": "Rome"
+        },
+        {
+          "en": "London"
+        },
+        {
+          "en": "Athens"
+        }
+      ],
+      "correctIndex": 3,
+      "answerTitle": {
+        "en": "The modern Games began in Athens."
+      },
+      "summary": {
+        "en": "Athens hosted athletes from 14 countries in April 1896. The Panathenaic Stadium, rebuilt almost entirely in marble, became the visual centrepiece of the revived international competition."
+      },
+      "facts": [
+        {
+          "label": {
+            "en": "Host city"
+          },
+          "value": {
+            "en": "Athens"
+          },
+          "detail": {
+            "en": "A symbolic connection to the ancient Games."
+          }
+        },
+        {
+          "label": {
+            "en": "Countries"
+          },
+          "value": {
+            "en": "14"
+          },
+          "detail": {
+            "en": "Represented by roughly 240 athletes."
+          }
+        },
+        {
+          "label": {
+            "en": "Events"
+          },
+          "value": {
+            "en": "43"
+          },
+          "detail": {
+            "en": "Across nine different sports."
+          }
+        }
+      ],
+      "video": {
+        "title": {
+          "en": "How the modern Olympics began"
+        },
+        "creator": "Olympics",
+        "url": "https://www.youtube.com/results?search_query=Olympics+first+modern+games+Athens+1896"
+      },
+      "source": {
+        "label": {
+          "en": "Olympics: Athens 1896"
+        },
+        "url": "https://olympics.com/en/olympic-games/athens-1896"
+      }
+    },
+    {
+      "slug": "lotr-oscars",
+      "status": "published",
+      "difficulty": "standard",
+      "category": "Movies",
+      "theme": "violet",
+      "eyebrow": {
+        "en": "A journey through Middle-earth"
+      },
+      "text": {
+        "en": "How many Academy Awards did The Lord of the Rings film trilogy win in total?"
+      },
+      "options": [
+        {
+          "en": "11"
+        },
+        {
+          "en": "17"
+        },
+        {
+          "en": "22"
+        },
+        {
+          "en": "30"
+        }
+      ],
+      "correctIndex": 1,
+      "answerTitle": {
+        "en": "The trilogy won 17 Academy Awards."
+      },
+      "summary": {
+        "en": "The Fellowship of the Ring won four Oscars, The Two Towers won two, and The Return of the King completed a historic clean sweep with eleven. Together, the films received 30 nominations and won 17 times."
+      },
+      "facts": [
+        {
+          "label": {
+            "en": "Fellowship"
+          },
+          "value": {
+            "en": "4 wins"
+          },
+          "detail": {
+            "en": "From 13 nominations."
+          }
+        },
+        {
+          "label": {
+            "en": "Two Towers"
+          },
+          "value": {
+            "en": "2 wins"
+          },
+          "detail": {
+            "en": "From six nominations."
+          }
+        },
+        {
+          "label": {
+            "en": "Return of the King"
+          },
+          "value": {
+            "en": "11 / 11"
+          },
+          "detail": {
+            "en": "It won every category in which it was nominated."
+          }
+        }
+      ],
+      "video": {
+        "title": {
+          "en": "Why Middle-earth still feels real"
+        },
+        "creator": "Nerd of the Rings",
+        "url": "https://www.youtube.com/results?search_query=Nerd+of+the+Rings+Middle-earth+filmmaking"
+      },
+      "source": {
+        "label": {
+          "en": "The Academy: 2004 ceremony"
+        },
+        "url": "https://www.oscars.org/oscars/ceremonies/2004"
+      }
+    },
+    {
+      "slug": "thriller-album",
+      "status": "published",
+      "difficulty": "standard",
+      "category": "Music",
+      "theme": "coral",
+      "eyebrow": {
+        "en": "A record-breaking album"
+      },
+      "text": {
+        "en": "Who released the album Thriller in 1982?"
+      },
+      "options": [
+        {
+          "en": "Prince"
+        },
+        {
+          "en": "Michael Jackson"
+        },
+        {
+          "en": "Stevie Wonder"
+        },
+        {
+          "en": "David Bowie"
+        }
+      ],
+      "correctIndex": 1,
+      "answerTitle": {
+        "en": "Thriller is Michael Jackson’s landmark album."
+      },
+      "summary": {
+        "en": "Produced by Quincy Jones, Thriller blended pop, rock, funk and R&B. Its cinematic music videos helped transform the medium and made the album a defining global pop-culture event."
+      },
+      "facts": [
+        {
+          "label": {
+            "en": "Released"
+          },
+          "value": {
+            "en": "1982"
+          },
+          "detail": {
+            "en": "On November 30."
+          }
+        },
+        {
+          "label": {
+            "en": "Producer"
+          },
+          "value": {
+            "en": "Quincy Jones"
+          },
+          "detail": {
+            "en": "His second album with Jackson."
+          }
+        },
+        {
+          "label": {
+            "en": "Grammy wins"
+          },
+          "value": {
+            "en": "8"
+          },
+          "detail": {
+            "en": "At the 1984 ceremony."
+          }
+        }
+      ],
+      "video": {
+        "title": {
+          "en": "How Thriller changed music videos"
+        },
+        "creator": "The Recording Academy",
+        "url": "https://www.youtube.com/results?search_query=Recording+Academy+Thriller+Michael+Jackson"
+      },
+      "source": {
+        "label": {
+          "en": "The Recording Academy"
+        },
+        "url": "https://www.grammy.com/artists/michael-jackson/13202"
+      }
+    },
+    {
+      "slug": "http-meaning",
+      "status": "published",
+      "difficulty": "standard",
+      "category": "Technology",
+      "theme": "blue",
+      "eyebrow": {
+        "en": "The language of the web"
+      },
+      "text": {
+        "en": "What does HTTP stand for?"
+      },
+      "options": [
+        {
+          "en": "HyperText Transfer Protocol"
+        },
+        {
+          "en": "High Transmission Text Process"
+        },
+        {
+          "en": "Hyperlink Transport Technology Program"
+        },
+        {
+          "en": "Hosted Text Transfer Platform"
+        }
+      ],
+      "correctIndex": 0,
+      "answerTitle": {
+        "en": "HTTP is the HyperText Transfer Protocol."
+      },
+      "summary": {
+        "en": "It defines how clients and servers exchange resources on the web. HTTPS adds encryption and identity verification through TLS, helping protect information while it travels across a network."
+      },
+      "facts": [
+        {
+          "label": {
+            "en": "Inventor"
+          },
+          "value": {
+            "en": "Tim Berners-Lee"
+          },
+          "detail": {
+            "en": "HTTP began alongside the World Wide Web."
+          }
+        },
+        {
+          "label": {
+            "en": "Secure form"
+          },
+          "value": {
+            "en": "HTTPS"
+          },
+          "detail": {
+            "en": "HTTP protected by TLS encryption."
+          }
+        },
+        {
+          "label": {
+            "en": "Common success"
+          },
+          "value": {
+            "en": "200"
+          },
+          "detail": {
+            "en": "The familiar “OK” response status."
+          }
+        }
+      ],
+      "video": {
+        "title": {
+          "en": "How the web works"
+        },
+        "creator": "Mozilla",
+        "url": "https://www.youtube.com/results?search_query=Mozilla+how+the+web+works+HTTP"
+      },
+      "source": {
+        "label": {
+          "en": "MDN Web Docs"
+        },
+        "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview"
+      }
+    },
+    {
+      "slug": "largest-desert",
+      "status": "published",
+      "difficulty": "standard",
+      "category": "World",
+      "theme": "emerald",
+      "eyebrow": {
+        "en": "Not all deserts are hot"
+      },
+      "text": {
+        "en": "What is the largest desert on Earth?"
+      },
+      "options": [
+        {
+          "en": "Sahara"
+        },
+        {
+          "en": "Arabian Desert"
+        },
+        {
+          "en": "Gobi"
+        },
+        {
+          "en": "Antarctica"
+        }
+      ],
+      "correctIndex": 3,
+      "answerTitle": {
+        "en": "Antarctica is Earth’s largest desert."
+      },
+      "summary": {
+        "en": "A desert is defined by its extremely low precipitation, not by temperature. Antarctica receives very little rain or snow and covers a larger area than any hot desert."
+      },
+      "facts": [
+        {
+          "label": {
+            "en": "Area"
+          },
+          "value": {
+            "en": "14m km²"
+          },
+          "detail": {
+            "en": "Almost twice the size of Australia."
+          }
+        },
+        {
+          "label": {
+            "en": "Ice coverage"
+          },
+          "value": {
+            "en": "~98%"
+          },
+          "detail": {
+            "en": "Most of the continent is covered by ice."
+          }
+        },
+        {
+          "label": {
+            "en": "Largest hot desert"
+          },
+          "value": {
+            "en": "Sahara"
+          },
+          "detail": {
+            "en": "The distinction belongs to northern Africa."
+          }
+        }
+      ],
+      "video": {
+        "title": {
+          "en": "Why Antarctica is a desert"
+        },
+        "creator": "National Geographic",
+        "url": "https://www.youtube.com/results?search_query=National+Geographic+Antarctica+desert"
+      },
+      "source": {
+        "label": {
+          "en": "Encyclopaedia Britannica"
+        },
+        "url": "https://www.britannica.com/place/Antarctica"
+      }
+    }
+  ]
+}

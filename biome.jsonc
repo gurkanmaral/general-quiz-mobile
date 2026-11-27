@@ -1,0 +1,31 @@
+// Lint only: the formatter stays off (same setup as the web and API repos).
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+	"files": { "includes": ["src/**", "scripts/**"] },
+	"formatter": { "enabled": false },
+	"assist": { "enabled": false },
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			"suspicious": {
+				// Index keys are only used for positional lists (answer slots, code tiles).
+				"noArrayIndexKey": "off"
+			},
+			"style": {
+				// Non-null assertions follow noUncheckedIndexedAccess lookups.
+				"noNonNullAssertion": "off"
+			},
+			"correctness": {
+				// Warnings, not errors: each hook needs a human look, since adding deps can change behaviour.
+				"useExhaustiveDependencies": "warn",
+				// These UI kit components render their children inside <Text>.
+				"noReactNativeRawText": {
+					"level": "error",
+					"options": { "skip": ["Display", "Body", "Strong", "Label", "Kicker", "PageTitle", "Note", "ErrorText", "Animated.Text"] }
+				}
+			}
+		}
+	}
+}
