@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { type BottomTabBarProps, Tabs } from 'expo-router/tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/ui/kit';
@@ -11,13 +11,8 @@ const TABS: { name: string; label: string; number: string; icon: IconName }[] = 
   { name: 'profile', label: 'Profile', number: '04', icon: 'profile' },
 ];
 
-type TabBarProps = {
-  state: { index: number; routes: { key: string; name: string }[] };
-  navigation: { navigate: (name: string) => void; emit: (event: { type: 'tabPress'; target: string; canPreventDefault: true }) => { defaultPrevented: boolean } };
-};
-
 /** The web's numbered nav as a bottom bar; the active tab is a yellow sticker. */
-function TabBar({ state, navigation }: TabBarProps) {
+function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 10) }]} accessibilityRole="tablist">
@@ -26,8 +21,8 @@ function TabBar({ state, navigation }: TabBarProps) {
         if (!tab) return null;
         const focused = state.index === index;
         const onPress = () => {
-          const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+          const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          if (!focused && !event.defaultPrevented) navigateToTab(route.key);
         };
         return (
           <Pressable key={route.key} onPress={onPress} accessibilityRole="tab" accessibilityState={{ selected: focused }} accessibilityLabel={tab.label} style={styles.tab}>
@@ -50,7 +45,7 @@ function TabBar({ state, navigation }: TabBarProps) {
 
 export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...(props as unknown as TabBarProps)} />}>
+    <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...props} />}>
       {TABS.map((tab) => (
         <Tabs.Screen key={tab.name} name={tab.name} options={{ title: tab.label }} />
       ))}

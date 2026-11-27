@@ -40,11 +40,12 @@ export function Screen({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <View style={styles.root}>
+    // The status bar area sits outside the ScrollView, so content scrolls under nothing but the paper.
+    <View style={[styles.root, { paddingTop: insets.top }]}>
       <GridBackground />
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 40 }, contentStyle]}
+        contentContainerStyle={[styles.content, { paddingTop: 6, paddingBottom: insets.bottom + 40 }, contentStyle]}
         keyboardShouldPersistTaps="handled"
         refreshControl={onRefresh ? <RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} tintColor={colors.ink} /> : undefined}
       >
